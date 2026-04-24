@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Apothecaria — Registro de Reactivos</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Cinzel:wght@400;600&family=IM+Fell+English:ital@0;1&display=swap');
+
+  :root {
+    --parchment: #f4ead5;
+    --parchment-dark: #e8d9b8;
+    --ink: #2c1f0e;
+    --ink-light: #5a3e28;
+    --forest: #2d5016;
+    --loch: #0d3d5e;
+    --mountain: #4a3728;
+    --dungeon: #3a1a4a;
+    --bog: #3d4a1a;
+    --isles: #1a3a4a;
+    --strange: #4a1a3a;
+    --village: #5e3d0d;
+    --gold: #b8860b;
+    --gold-light: #d4a017;
+    --poison-red: #8b1a1a;
+    --sweet-blue: #1a5a8b;
+    --star: #c9a84c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background-color: #1a1208;
+    background-image: 
+      radial-gradient(ellipse at 20% 20%, rgba(184,134,11,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, rgba(184,134,11,0.05) 0%, transparent 50%);
+    min-height: 100vh;
+    font-family: 'IM Fell English', serif;
+    color: var(--ink);
+    padding: 20px;
+  }
+
+  /* HEADER */
+  .header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 30px 20px;
+    background: var(--parchment);
+    border: 3px solid var(--gold);
+    border-radius: 4px;
+    box-shadow: 0 0 40px rgba(184,134,11,0.3), inset 0 0 60px rgba(184,134,11,0.05);
+    position: relative;
+    overflow: hidden;
+  }
+  .header::before {
+    content: '⚗';
+    position: absolute;
+    font-size: 200px;
+    opacity: 0.03;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--gold);
+  }
+  .header h1 {
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    color: var(--ink);
+    letter-spacing: 2px;
+    text-shadow: 1px 1px 0 var(--gold-light);
+    position: relative;
+  }
+  .header p {
+    font-style: italic;
+    color: var(--ink-light);
+    margin-top: 8px;
+    font-size: 1rem;
+  }
+
+  /* ORNAMENT */
+  .ornament {
+    text-align: center;
+    color: var(--gold);
+    font-size: 1.2rem;
+    margin: 8px 0;
+    letter-spacing: 8px;
+  }
+
+  /* SEARCH & FILTERS */
+  .controls {
+    background: var(--parchment);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  }
+  .controls label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .search-box {
+    flex: 1;
+    min-width: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .search-box input {
+    background: var(--parchment-dark);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-family: 'IM Fell English', serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-box input:focus { border-color: var(--gold-light); }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .filter-group select {
+    background: var(--parchment-dark);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-family: 'IM Fell English', serif;
+    font-size: 0.9rem;
+    color: var(--ink);
+    outline: none;
+    cursor: pointer;
+  }
+
+  .filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag-filter {
+    background: var(--parchment-dark);
+    border: 1px solid var(--gold);
+    border-radius: 3px;
+    padding: 5px 10px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    color: var(--ink-light);
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .tag-filter.active {
+    background: var(--gold);
+    color: var(--ink);
+    border-color: var(--gold-light);
+  }
+  .tag-filter:hover { background: var(--parchment); }
+
+  /* STATS BAR */
+  .stats-bar {
+    background: var(--parchment);
+    border: 1px solid var(--gold);
+    border-radius: 4px;
+    padding: 10px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-family: 'Cinzel', serif;
+    font-size: 0.75rem;
+    color: var(--ink-light);
+    letter-spacing: 0.5px;
+  }
+  .stat-item span { color: var(--ink); font-weight: 600; }
+
+  /* REAGENT GRID */
+  .reagent-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 12px;
+  }
+
+  /* REAGENT CARD */
+  .reagent-card {
+    background: var(--parchment);
+    border: 2px solid var(--gold);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+  .reagent-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.4);
+  }
+  .reagent-card.owned { border-color: #5a8b1a; }
+  .reagent-card.owned .card-header { background: rgba(90,139,26,0.15); }
+
+  /* CARD HEADER = CLICKABLE TOGGLE */
+  .card-header {
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: rgba(184,134,11,0.05);
+    user-select: none;
+  }
+  .card-header:hover { background: rgba(184,134,11,0.12); }
+
+  .owned-checkbox {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    border: 2px solid var(--gold);
+    border-radius: 3px;
+    background: var(--parchment-dark);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    margin-top: 2px;
+    transition: all 0.2s;
+    color: var(--forest);
+  }
+  .reagent-card.owned .owned-checkbox {
+    background: #5a8b1a;
+    border-color: #5a8b1a;
+    color: white;
+  }
+
+  .card-main {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .reagent-name {
+    font-family: 'Cinzel', serif;
+    font-size: 0.95rem;
+    color: var(--ink);
+    font-weight: 600;
+    line-height: 1.3;
+  }
+
+  .card-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 5px;
+    align-items: center;
+  }
+
+  .type-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 0.6rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .type-PLANT { background: #d4edbc; color: #2d5016; border: 1px solid #2d5016; }
+  .type-ANIMAL { background: #edddbc; color: #5e3d0d; border: 1px solid #5e3d0d; }
+  .type-MAGIC { background: #ddbced; color: #4a1a4a; border: 1px solid #4a1a4a; }
+
+  .stars {
+    color: var(--star);
+    font-size: 0.85rem;
+    letter-spacing: -1px;
+  }
+
+  .expand-icon {
+    font-size: 0.7rem;
+    color: var(--gold);
+    margin-left: auto;
+    transition: transform 0.2s;
+    align-self: center;
+    min-width: 16px;
+    text-align: center;
+  }
+  .reagent-card.expanded .expand-icon { transform: rotate(90deg); }
+
+  /* CARD BODY = COLLAPSIBLE */
+  .card-body {
+    display: none;
+    padding: 0 14px 14px;
+    border-top: 1px solid rgba(184,134,11,0.3);
+  }
+  .reagent-card.expanded .card-body { display: block; }
+
+  .card-description {
+    font-style: italic;
+    font-size: 0.85rem;
+    color: var(--ink-light);
+    margin: 10px 0;
+    line-height: 1.5;
+  }
+
+  /* LOCALE TABLE */
+  .locale-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 0.82rem;
+  }
+  .locale-table th {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ink-light);
+    padding: 4px 6px;
+    text-align: left;
+    border-bottom: 1px solid rgba(184,134,11,0.4);
+  }
+  .locale-table td {
+    padding: 4px 6px;
+    border-bottom: 1px solid rgba(184,134,11,0.15);
+    vertical-align: middle;
+  }
+  .locale-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 2px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .loc-Forest { background: rgba(45,80,22,0.15); color: var(--forest); border: 1px solid var(--forest); }
+  .loc-Loch { background: rgba(13,61,94,0.15); color: var(--loch); border: 1px solid var(--loch); }
+  .loc-Mountain { background: rgba(74,55,40,0.15); color: var(--mountain); border: 1px solid var(--mountain); }
+  .loc-Dungeon { background: rgba(58,26,74,0.15); color: var(--dungeon); border: 1px solid var(--dungeon); }
+  .loc-Bog { background: rgba(61,74,26,0.15); color: var(--bog); border: 1px solid var(--bog); }
+  .loc-Isles { background: rgba(26,58,74,0.15); color: var(--isles); border: 1px solid var(--isles); }
+  .loc-Strange { background: rgba(74,26,58,0.15); color: var(--strange); border: 1px solid var(--strange); }
+  .loc-Village { background: rgba(94,61,13,0.15); color: var(--village); border: 1px solid var(--village); }
+
+  .difficulty-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .diff-pips {
+    display: flex;
+    gap: 2px;
+  }
+  .pip {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--parchment-dark);
+    border: 1px solid var(--gold);
+  }
+  .pip.filled { background: var(--gold); }
+  .diff-num {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--ink-light);
+  }
+
+  .season-mod {
+    font-size: 0.75rem;
+    color: var(--ink-light);
+    font-style: italic;
+    margin-top: 4px;
+  }
+  .season-mod span { color: var(--ink); font-style: normal; }
+
+  /* USES / TAGS */
+  .uses-section { margin-top: 8px; }
+  .uses-title {
+    font-family: 'Cinzel', serif;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--ink-light);
+    margin-bottom: 4px;
+  }
+  .use-item {
+    font-size: 0.82rem;
+    padding: 3px 0;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+  .use-item em {
+    font-style: normal;
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--ink-light);
+    background: rgba(184,134,11,0.1);
+    padding: 1px 4px;
+    border-radius: 2px;
+    margin-right: 4px;
+  }
+
+  .tag-pill {
+    display: inline-block;
+    background: rgba(184,134,11,0.1);
+    border: 1px solid rgba(184,134,11,0.3);
+    border-radius: 2px;
+    padding: 1px 6px;
+    font-family: 'Cinzel', serif;
+    font-size: 0.62rem;
+    color: var(--ink);
+    margin: 2px 2px 0 0;
+  }
+
+  .special-note {
+    background: rgba(139,26,26,0.08);
+    border-left: 3px solid var(--poison-red);
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    color: var(--poison-red);
+    margin-top: 6px;
+    border-radius: 0 2px 2px 0;
+  }
+  .sweet-note {
+    background: rgba(26,90,139,0.08);
+    border-left: 3px solid var(--sweet-blue);
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    color: var(--sweet-blue);
+    margin-top: 6px;
+    border-radius: 0 2px 2px 0;
+  }
+  .wand-note {
+    background: rgba(74,26,74,0.08);
+    border-left: 3px solid #4a1a4a;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+    color: #4a1a4a;
+    margin-top: 6px;
+    border-radius: 0 2px 2px 0;
+  }
+
+  /* COUNT CONTROL */
+  .count-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(184,134,11,0.2);
+  }
+  .count-label {
+    font-family: 'Cinzel', serif;
+    font-size: 0.7rem;
+    color: var(--ink-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .count-btn {
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--gold);
+    background: var(--parchment-dark);
+    color: var(--ink);
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    transition: background 0.15s;
+    font-family: 'Cinzel', serif;
+  }
+  .count-btn:hover { background: var(--gold); color: white; }
+  .count-display {
+    font-family: 'Cinzel', serif;
+    font-size: 1rem;
+    color: var(--ink);
+    min-width: 24px;
+    text-align: center;
+  }
+
+  /* NO RESULTS */
+  .no-results {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 40px;
+    color: var(--parchment-dark);
+    font-style: italic;
+    font-size: 1.1rem;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: #1a1208; }
+  ::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 4px; }
+
+  /* LOCALE SECTION HEADERS */
+  .section-header {
+    grid-column: 1/-1;
+    font-family: 'Cinzel Decorative', cursive;
+    font-size: 0.85rem;
+    color: var(--gold-light);
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(184,134,11,0.3);
+    margin-top: 8px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="ornament">✦ ✦ ✦</div>
+  <h1>Apothecaria — Diario de Reactivos</h1>
+  <p>Registro del inventario de la bruja · High Rannoc</p>
+  <div class="ornament">✦ ✦ ✦</div>
+</div>
+
+<div class="controls">
+  <div class="search-box">
+    <label>Buscar reactivo</label>
+    <input type="text" id="searchInput" placeholder="Escribe un nombre o etiqueta...">
+  </div>
+  <div class="filter-group">
+    <label>Tipo</label>
+    <select id="typeFilter">
+      <option value="">Todos los tipos</option>
+      <option value="PLANT">🌿 Planta</option>
+      <option value="ANIMAL">🦎 Animal</option>
+      <option value="MAGIC">✨ Magia</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Locale</label>
+    <select id="localeFilter">
+      <option value="">Todos los locales</option>
+      <option value="Forest">🌲 Bosque</option>
+      <option value="Loch">🌊 Lago</option>
+      <option value="Mountain">⛰️ Montaña</option>
+      <option value="Dungeon">💀 Mazmorra</option>
+      <option value="Bog">🌿 Pantano</option>
+      <option value="Isles">☁️ Islas</option>
+      <option value="Strange">🌀 Lo Extraño</option>
+      <option value="Village">🏘️ Aldea</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Uso medicinal</label>
+    <select id="useFilter">
+      <option value="">Todos los usos</option>
+      <option value="BLOOD">🩸 BLOOD</option>
+      <option value="BONES">🦴 BONES</option>
+      <option value="BOILS">💢 BOILS</option>
+      <option value="BURN">🔥 BURN</option>
+      <option value="COLD">❄️ COLD</option>
+      <option value="COUGH">💨 COUGH</option>
+      <option value="CURSE">🌀 CURSE</option>
+      <option value="DEHYDRATION">💧 DEHYDRATION</option>
+      <option value="EAR">👂 EAR</option>
+      <option value="FEET">🦶 FEET</option>
+      <option value="GHOUL">💀 GHOUL</option>
+      <option value="HAIR">💇 HAIR</option>
+      <option value="HOT">🌡️ HOT</option>
+      <option value="INFECTION">🦠 INFECTION</option>
+      <option value="LUNGS">🫁 LUNGS</option>
+      <option value="MAGIC">✨ MAGIC</option>
+      <option value="MOOD">😌 MOOD</option>
+      <option value="MOUTH">👄 MOUTH</option>
+      <option value="NERVES">⚡ NERVES</option>
+      <option value="PAIN">😣 PAIN</option>
+      <option value="PARASITE">🪱 PARASITE</option>
+      <option value="POISON">☠️ POISON</option>
+      <option value="RASH">🔴 RASH</option>
+      <option value="SENSES">👁️ SENSES</option>
+      <option value="SKIN">🩹 SKIN</option>
+      <option value="SLEEP">😴 SLEEP</option>
+      <option value="SPIRIT">👻 SPIRIT</option>
+      <option value="STOMACH">🫃 STOMACH</option>
+      <option value="TEETH">🦷 TEETH</option>
+      <option value="TIME">⏳ TIME</option>
+      <option value="WART">🟤 WART</option>
+      <option value="WOUND">🩸 WOUND</option>
+    </select>
+  </div>
+  <div class="filter-group">
+    <label>Posesión</label>
+    <select id="ownedFilter">
+      <option value="">Todos</option>
+      <option value="owned">✓ Tengo</option>
+      <option value="missing">✗ Me falta</option>
+    </select>
+  </div>
+</div>
+
+<div class="stats-bar" id="statsBar">
+  <div>Mostrando <span id="statShown">0</span> reactivos</div>
+  <div>Tengo: <span id="statOwned">0</span></div>
+  <div>Me faltan: <span id="statMissing">0</span></div>
+  <div style="margin-left:auto;font-family:'Cinzel',serif;font-size:0.7rem"><span id="syncStatus" style="color:var(--gold)">⟳ Cargando...</span></div>
+</div>
+
+<div class="reagent-grid" id="reagentGrid"></div>
+
+<script type="module">
+// ══════════════════════════════════════════════════════
+// DATOS DE REACTIVOS
+// ══════════════════════════════════════════════════════
+const reagents = [
+  // ── GLIMMERWOOD GROVE (Bosque) ──
+  {
+    id: 1,
+    name: "Scramble Bramble",
+    type: "PLANT",
+    stars: 1,
+    description: "Una zarza espinosa peculiar que crece en colinas empinadas y orillas de ríos. Cuando se perturba, puede mover agua a través de sí misma para 'escapar'. Usa guantes gruesos.",
+    locales: [
+      { name: "Forest", value: 3 },
+      { name: "Loch", value: 5 }
+    ],
+    seasonMods: "+1 en Otoño | +5 en Invierno",
+    uses: [
+      { method: "CRUSH + BOIL", tags: ["MOOD", "SENSES"] }
+    ],
+    notes: ["Añade 1 punto de VENENO"]
+  },
+  {
+    id: 2,
+    name: "Shieldcap",
+    type: "PLANT",
+    stars: 1,
+    description: "Un hongo de color azul-acero que las hadas pequeñas usan como escudo gracias a su increíblemente fuerte sombrero. Crece cerca de la base de robles.",
+    locales: [
+      { name: "Forest", value: 2 },
+      { name: "Bog", value: 1 }
+    ],
+    seasonMods: "-2 en Otoño",
+    uses: [
+      { method: "CRUSH (sombrero)", tags: ["TEETH", "BONES"] },
+      { method: "RAW (esporas)", tags: ["TEETH"] }
+    ],
+    notes: []
+  },
+  {
+    id: 3,
+    name: "Fairy Dust",
+    type: "MAGIC",
+    stars: 2,
+    description: "Difícil de obtener directamente de la fuente, por suerte las pequeñas criaturas no se preocupan mucho por limpiar tras ellas. Busca en setas o deja una trampa para hadas fuera.",
+    locales: [
+      { name: "Forest", value: 6 },
+      { name: "Bog", value: 3 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["MOOD", "CURSE"] }
+    ],
+    notes: []
+  },
+  {
+    id: 4,
+    name: "Foot Fungus",
+    type: "PLANT",
+    stars: 2,
+    description: "Encontrado en los espacios entre los dedos de los Gigantes, este potente hongo es asqueroso de recolectar y peor de ingerir, pero es un poderoso curativo.",
+    locales: [
+      { name: "Forest", value: 10 },
+      { name: "Mountain", value: 10 },
+      { name: "Dungeon", value: 10 }
+    ],
+    seasonMods: "+1 en Invierno",
+    uses: [
+      { method: "BOIL", tags: ["BURN", "BOILS", "RASH"] }
+    ],
+    notes: ["Añade 2 puntos de VENENO", "⚠ Hazlo al aire libre"]
+  },
+  {
+    id: 5,
+    name: "Wild Rose",
+    type: "PLANT",
+    stars: 2,
+    description: "Una planta hermosa que la gente de High Rannoc ha intentado tanto fomentar como erradicar. Crece donde puede obtener luz solar, fácil de encontrar en Verano.",
+    locales: [
+      { name: "Forest", value: 5 },
+      { name: "Village", value: 4 }
+    ],
+    seasonMods: "-3 en Verano",
+    uses: [
+      { method: "CRUSH (semillas de escaramujo)", tags: ["BONES", "SKIN"] }
+    ],
+    notes: []
+  },
+  {
+    id: 6,
+    name: "Surgeon Sap",
+    type: "PLANT",
+    stars: 2,
+    description: "Un pilar del Sauce Enfermero, esta savia pegajosa fomenta activamente el proceso de curación. Los animales heridos a menudo lo lamen directamente del árbol.",
+    locales: [
+      { name: "Forest", value: 8 },
+      { name: "Bog", value: 3 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["WOUND", "BURN"] }
+    ],
+    notes: ["Añade 1 punto de DULCE"]
+  },
+  {
+    id: 7,
+    name: "Princess Toad",
+    type: "ANIMAL",
+    stars: 2,
+    description: "Una adorable criatura, el sapo princesa es de color rosado con labios rojos. Su encantadora danza de cortejo es una maravilla.",
+    locales: [
+      { name: "Forest", value: 10 },
+      { name: "Bog", value: 5 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (mucus)", tags: ["WART", "RASH"] },
+      { method: "CRUSH (heces)", tags: ["MOOD"] }
+    ],
+    notes: []
+  },
+  {
+    id: 8,
+    name: "Songberries",
+    type: "PLANT",
+    stars: 1,
+    description: "Únicas de Glimmerwood, estas bayas especiales se encuentran escuchando a las hadas cantoras que acuden a ellas. Buenas en mermelada y un básico de los pasteles de High Rannoc.",
+    locales: [
+      { name: "Forest", value: 2 }
+    ],
+    seasonMods: "-2 en Invierno | +1 en Verano",
+    uses: [
+      { method: "CRUSH", tags: ["MOOD"] }
+    ],
+    notes: ["Añade 1 punto de DULCE"]
+  },
+  {
+    id: 9,
+    name: "Glittersnow",
+    type: "MAGIC",
+    stars: 2,
+    description: "Cuando la nieve cae sobre las líneas ley, absorbe la energía mágica latente. Añadir un poco a una poción es una forma segura de eliminar efectos mágicos no deseados.",
+    locales: [
+      { name: "Forest", value: 9 },
+      { name: "Mountain", value: 4 },
+      { name: "Strange", value: 11 }
+    ],
+    seasonMods: "-5 en Invierno | +5 en Verano",
+    uses: [
+      { method: "RAW", tags: ["CURSE", "MAGIC"] }
+    ],
+    notes: []
+  },
+  {
+    id: 10,
+    name: "Coffee Cap",
+    type: "PLANT",
+    stars: 1,
+    description: "Mantenida a mano por guardias y estudiantes, el Coffee Cap está lleno de energía de liberación rápida y puede agudizar incluso los sentidos más torpes. También conocido como Salvador del Borracho.",
+    locales: [
+      { name: "Forest", value: 4 },
+      { name: "Bog", value: 2 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH + BOIL (sombrero y tallo)", tags: ["SENSES"] }
+    ],
+    notes: ["Añade 1 punto de DULCE"]
+  },
+  {
+    id: 11,
+    name: "Hair of Boar",
+    type: "ANIMAL",
+    stars: 1,
+    description: "Admitidamente no muy divertido de recolectar, especialmente fresco, pero si te ganas su confianza lo encontrarás suficientemente fácil.",
+    locales: [
+      { name: "Forest", value: 5 },
+      { name: "Loch", value: 8 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["COUGH", "LUNGS"] }
+    ],
+    notes: []
+  },
+  {
+    id: 12,
+    name: "A Snake's Promise",
+    type: "MAGIC",
+    stars: 3,
+    description: "Notoriamente difícil de obtener y muy fácilmente rota. Mi recomendación es sobornarlos con comida y aprender la diferencia entre una víbora y una pitón.",
+    locales: [
+      { name: "Forest", value: 13 },
+      { name: "Bog", value: 5 },
+      { name: "Dungeon", value: 10 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["SPIRIT", "GHOUL"] }
+    ],
+    notes: ["Requiere Varita", "Añade 2 puntos de VENENO"]
+  },
+  {
+    id: 13,
+    name: "Whisper of a Cat",
+    type: "MAGIC",
+    stars: 2,
+    description: "Si tienes la suerte de tener un familiar felino, podrás obtener su ayuda. De lo contrario, tendrás que acercarte sigilosamente a uno de los gatos del bosque.",
+    locales: [
+      { name: "Forest", value: 6 },
+      { name: "Village", value: 2 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["PARASITE", "SLEEP"] }
+    ],
+    notes: ["Requiere Varita"]
+  },
+  {
+    id: 14,
+    name: "Amethyst Antlers",
+    type: "ANIMAL",
+    stars: 3,
+    description: "Los ciervos de Glimmerwood son únicos en muchos aspectos, pero su rasgo más especial son sus cuernos, de los que crecen deslumbrantes cristales. Más fáciles de recolectar cuando caen en Invierno.",
+    locales: [
+      { name: "Forest", value: 11 },
+      { name: "Bog", value: 8 }
+    ],
+    seasonMods: "-4 en Invierno | +2 en Verano",
+    uses: [
+      { method: "CRUSH", tags: ["MAGIC", "CURSE", "MOOD"] }
+    ],
+    notes: []
+  },
+  {
+    id: 15,
+    name: "Rat Spit",
+    type: "ANIMAL",
+    stars: 1,
+    description: "Sí, no muy apetecible... Te recomiendo NO contarle esto al paciente.",
+    locales: [
+      { name: "Forest", value: 4 },
+      { name: "Dungeon", value: 2 },
+      { name: "Isles", value: 5 },
+      { name: "Strange", value: 9 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (saliva)", tags: ["TEETH"] }
+    ],
+    notes: []
+  },
+
+  // ── MELTWATER LOCH ──
+  {
+    id: 16,
+    name: "Golden Scale Guppy",
+    type: "ANIMAL",
+    stars: 2,
+    description: "Relucientes y centelleantes, estos escurridizos peces son valorados no solo por sus escamas hermosas sino también por su veneno espesador de sangre que pilla desprevenidos a muchos.",
+    locales: [
+      { name: "Loch", value: 5 },
+      { name: "Dungeon", value: 5 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (veneno)", tags: ["BLOOD"] }
+    ],
+    notes: ["Añade 2 puntos de VENENO"]
+  },
+  {
+    id: 17,
+    name: "Driftwood Memories",
+    type: "MAGIC",
+    stars: 2,
+    description: "Las mentes de los árboles son cosas extrañas y ajenas, llenas de pensamientos que duran más que tú y yo. La paz encontrada en esos recuerdos puede ser de gran ayuda.",
+    locales: [
+      { name: "Loch", value: 1 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW (Recuerdos de Flotar)", tags: ["MOOD", "SENSES"] },
+      { method: "DISTIL (Recuerdos de Flotar)", tags: ["TIME"] }
+    ],
+    notes: ["Requiere Varita"]
+  },
+  {
+    id: 18,
+    name: "Shock Fish",
+    type: "ANIMAL",
+    stars: 2,
+    description: "Otro que es horrible de recolectar, estos desagradables bichos emiten una nube de fluido cargado eléctricamente que puede entumecer cualquier parte que lo toque durante horas.",
+    locales: [
+      { name: "Loch", value: 7 },
+      { name: "Dungeon", value: 3 },
+      { name: "Dungeon", value: 11 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (fluido)", tags: ["NERVES", "PAIN"] },
+      { method: "DISTIL (fluido)", tags: ["BOILS"] }
+    ],
+    notes: []
+  },
+  {
+    id: 19,
+    name: "Gas Weed",
+    type: "PLANT",
+    stars: 1,
+    description: "Una planta popular entre los entusiastas del buceo, esta bulbosa alga marina está llena de gas rico en oxígeno. Muy fácil de encontrar en la temporada adecuada.",
+    locales: [
+      { name: "Loch", value: 3 },
+      { name: "Dungeon", value: 2 }
+    ],
+    seasonMods: "-1 en Verano | +8 en Invierno",
+    uses: [
+      { method: "CRUSH (semillas y pulpa)", tags: ["LUNGS"] }
+    ],
+    notes: []
+  },
+  {
+    id: 20,
+    name: "Shadow Shark",
+    type: "ANIMAL",
+    stars: 2,
+    description: "Cuando este depredador de ojos brillantes es herido, se rodea de una nube de tinta negra casi imposible de ver.",
+    locales: [
+      { name: "Loch", value: 8 },
+      { name: "Dungeon", value: 6 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW (tinta)", tags: ["RASH", "BURN"] },
+      { method: "DISTIL (tinta)", tags: ["PAIN"] }
+    ],
+    notes: ["Elimina 1 punto de DULCE"]
+  },
+  {
+    id: 21,
+    name: "Slime Shell",
+    type: "ANIMAL",
+    stars: 2,
+    description: "Encontrado en aguas poco profundas y charcos de roca, estas almejas del tamaño de un puño producen una práctica baba que mata parásitos y combate infecciones.",
+    locales: [
+      { name: "Loch", value: 4 },
+      { name: "Dungeon", value: 9 }
+    ],
+    seasonMods: "-2 en Verano | +2 en Invierno",
+    uses: [
+      { method: "RAW (baba)", tags: ["PARASITE", "INFECTION", "BLOOD"] }
+    ],
+    notes: []
+  },
+  {
+    id: 22,
+    name: "Deep Reed",
+    type: "PLANT",
+    stars: 1,
+    description: "Estas juncias aceitosas se encuentran en muchos cuerpos de agua estancada, sobresaliendo muy por encima del agua para parecer casi árboles delgados. El aceite es apreciado por su pureza.",
+    locales: [
+      { name: "Loch", value: 4 },
+      { name: "Dungeon", value: 4 },
+      { name: "Bog", value: 6 }
+    ],
+    seasonMods: "+6 en Invierno",
+    uses: [
+      { method: "CRUSH", tags: ["EAR", "BLOOD", "STOMACH"] }
+    ],
+    notes: []
+  },
+  {
+    id: 23,
+    name: "Smooth-Croak",
+    type: "ANIMAL",
+    stars: 1,
+    description: "Estas coloridas ranas son tan increíblemente suaves que tuve que poner señales recordando a los visitantes que no las acaricien. Usa guantes húmedos.",
+    locales: [
+      { name: "Loch", value: 2 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (mucus)", tags: ["WARTS"] },
+      { method: "DISTIL (mucus)", tags: ["SKIN"] }
+    ],
+    notes: []
+  },
+  {
+    id: 24,
+    name: "Dentist Crab",
+    type: "ANIMAL",
+    stars: 2,
+    description: "Muchos peces visitan estos pequeños cangrejos para limpiar sus bocas, branquias y aletas. El gel antimicrobiano que exuda de sus pinzas proporciona protección duradera.",
+    locales: [
+      { name: "Loch", value: 8 },
+      { name: "Dungeon", value: 2 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW (gel de pinza)", tags: ["TEETH", "MOUTH", "LUNGS"] },
+      { method: "DISTIL (gel de pinza)", tags: ["INFECTION"] }
+    ],
+    notes: []
+  },
+  {
+    id: 25,
+    name: "Wigfish",
+    type: "ANIMAL",
+    stars: 3,
+    description: "Increíblemente vanidoso, el brillante atún calvo crea una peluca de algas y, sinceramente, hace un trabajo increíble. Por desgracia, las pelucas son excelentes reactivos.",
+    locales: [
+      { name: "Loch", value: 3 },
+      { name: "Dungeon", value: 1 }
+    ],
+    seasonMods: "+10 por el resto de la Temporada después de recolectarlo",
+    uses: [
+      { method: "RAW (peluca)", tags: ["MOOD", "SLEEP", "HAIR"] }
+    ],
+    notes: []
+  },
+  {
+    id: 26,
+    name: "Fossil Fish",
+    type: "MAGIC",
+    stars: 3,
+    description: "Fósiles con un toque de magia. Los peces fósiles no comen, respiran ni hacen gran cosa excepto nadar, lo que los hace excelentes mascotas para brujas ocupadas.",
+    locales: [
+      { name: "Loch", value: 12 },
+      { name: "Dungeon", value: 9 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH (escamas de piedra)", tags: ["TIME", "MAGIC"] }
+    ],
+    notes: []
+  },
+  {
+    id: 27,
+    name: "Siren Song",
+    type: "MAGIC",
+    stars: 2,
+    description: "Hermoso, calmante, enloquecedor. La canción de sirena ha llevado a marineros a hazañas increíbles, incluyendo navegar un galeón varios kilómetros tierra adentro. Se recomienda tapones para los oídos.",
+    locales: [
+      { name: "Loch", value: 6 },
+      { name: "Dungeon", value: 8 }
+    ],
+    seasonMods: "+2 en Invierno | -5 en Verano",
+    uses: [
+      { method: "DISTIL", tags: ["CURSE", "EAR"] }
+    ],
+    notes: ["Requiere Varita"]
+  },
+  {
+    id: 28,
+    name: "Sea Beast's Saliva",
+    type: "ANIMAL",
+    stars: 3,
+    description: "La saliva de criaturas únicas como la que se encuentra en Meltwater está llena de potencial si eres lo suficientemente valiente o insensato para obtenerla.",
+    locales: [
+      { name: "Loch", value: 13 },
+      { name: "Dungeon", value: 4 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (saliva)", tags: ["WOUND", "PAIN"] },
+      { method: "DISTIL (saliva)", tags: ["BLOOD", "NERVES", "SENSES"] }
+    ],
+    notes: []
+  },
+  {
+    id: 29,
+    name: "Mermaid's Gift",
+    type: "PLANT",
+    stars: 2,
+    description: "Un tipo de alga venenosa, esta antigua cura para la calvicie es muy efectiva si se aplica correctamente y se prepara de forma que sus propiedades de crecimiento de cabello no acaben dando lenguas peludas.",
+    locales: [
+      { name: "Loch", value: 5 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (alga)", tags: ["HAIR"] }
+    ],
+    notes: ["Añade 1 punto de VENENO"]
+  },
+
+  // ── MOONBREAKER MOUNTAIN ──
+  {
+    id: 30,
+    name: "Milkstone",
+    type: "MAGIC",
+    stars: 2,
+    description: "Una cura popular para los bebés gigantes que están dentando, desafortunadamente no tan fácil de obtener para el resto de nosotros sin ciertas ventajas mágicas.",
+    locales: [
+      { name: "Mountain", value: 1 },
+      { name: "Village", value: 2 },
+      { name: "Forest", value: 4 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (leche)", tags: ["TEETH", "PAIN"] }
+    ],
+    notes: ["Requiere Varita o Gigante Amistoso"]
+  },
+  {
+    id: 31,
+    name: "Cynic Ivy",
+    type: "PLANT",
+    stars: 3,
+    description: "Un extraño veneno en esta hiedra colgante hace que el afectado vea todo en tonos más apagados y sea impermeable a la alegría, la risa y la sorpresa.",
+    locales: [
+      { name: "Mountain", value: 9 },
+      { name: "Forest", value: 13 },
+      { name: "Bog", value: 10 }
+    ],
+    seasonMods: "-3 en Verano",
+    uses: [
+      { method: "BOIL (hojas)", tags: ["SENSES", "MAGIC"] }
+    ],
+    notes: []
+  },
+  {
+    id: 32,
+    name: "Gull-Drake Guano",
+    type: "ANIMAL",
+    stars: 1,
+    description: "Dado libremente y con entusiasmo cuando no lo buscas, una escalada aterradora a sus nidos cuando lo necesitas. Otro de esos reactivos de los que es mejor no preguntar.",
+    locales: [
+      { name: "Mountain", value: 4 },
+      { name: "Loch", value: 7 }
+    ],
+    seasonMods: "-2 en Primavera | +4 en Invierno",
+    uses: [
+      { method: "CRUSH + BOIL", tags: ["COUGH", "LUNGS"] }
+    ],
+    notes: []
+  },
+  {
+    id: 33,
+    name: "Moon Lotus",
+    type: "PLANT",
+    stars: 2,
+    description: "Esta planta sensible permanece cerrada durante el día para protegerse de la dura luz del sol. Los senderistas usan el polen brillante para aliviar quemaduras solares.",
+    locales: [
+      { name: "Mountain", value: 7 },
+      { name: "Isles", value: 2 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW (polen)", tags: ["BURN", "HOT", "SKIN", "RASH"] }
+    ],
+    notes: []
+  },
+  {
+    id: 34,
+    name: "Jumpkin",
+    type: "PLANT",
+    stars: 3,
+    description: "Una especie traviesa de calabaza que algunas hadas plantaron en las laderas. Acércate demasiado y saltan hacia delante para darte un susto. Buena para la salud intestinal.",
+    locales: [
+      { name: "Mountain", value: 8 },
+      { name: "Village", value: 11 }
+    ],
+    seasonMods: "-6 en Otoño | -2 en Invierno",
+    uses: [
+      { method: "BOIL (carne)", tags: ["STOMACH"] },
+      { method: "CRUSH (semillas)", tags: ["COLD"] }
+    ],
+    notes: ["El resto se puede tallar en una bonita decoración"]
+  },
+  {
+    id: 35,
+    name: "Candy Rock",
+    type: "MAGIC",
+    stars: 0,
+    description: "Un hechicero pasó por High Rannoc hace unos años e intentó convertirlo en un desierto. Por suerte era incompetente e iletrado así que nos quedamos con parches de postres. La mayoría ya se ha comido.",
+    locales: [
+      { name: "Mountain", value: 9 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: [] }
+    ],
+    notes: ["Añade 4 puntos de DULCE"]
+  },
+  {
+    id: 36,
+    name: "Nimbus Fish",
+    type: "ANIMAL",
+    stars: 3,
+    description: "Cada pez contiene una pequeña vejiga de vuelo que les permite subir y bajar a través de las nubes llenas de agua de High Rannoc.",
+    locales: [
+      { name: "Mountain", value: 13 },
+      { name: "Isles", value: 3 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH (escamas)", tags: ["MOUTH", "FEET", "INFECTION"] }
+    ],
+    notes: []
+  },
+  {
+    id: 37,
+    name: "Ambergris",
+    type: "ANIMAL",
+    stars: 3,
+    description: "Encontrado flotando sobre nubes más densas o en los estanques de algunas islas flotantes, esta excreción de ballena celeste es increíblemente valiosa para perfumería y medicina.",
+    locales: [
+      { name: "Isles", value: 9 },
+      { name: "Loch", value: 13 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["SENSES", "COLD", "PAIN"] }
+    ],
+    notes: []
+  },
+  {
+    id: 38,
+    name: "Star Shard",
+    type: "MAGIC",
+    stars: 2,
+    description: "Hay muchas historias sobre estas esquirlas. Que conceden deseos, que brillan cuando ves a tu verdadero amor. Son bastante comunes en Las Islas de las Nubes.",
+    locales: [
+      { name: "Isles", value: 5 }
+    ],
+    seasonMods: "-4 para la Primera Dolencia de cada Temporada",
+    uses: [
+      { method: "CRUSH", tags: ["MAGIC", "CURSE"] }
+    ],
+    notes: []
+  },
+  {
+    id: 39,
+    name: "Pixie Fur",
+    type: "MAGIC",
+    stars: 2,
+    description: "Por más duro que suene, no te compadezas demasiado de los pequeños, ciertamente no lo harás después de tu primer encuentro con ellos. Rudos, rápidos e inteligentes, los Pixies son de los peores hada.",
+    locales: [
+      { name: "Mountain", value: 6 },
+      { name: "Bog", value: 9 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["RASH"] }
+    ],
+    notes: []
+  },
+  {
+    id: 40,
+    name: "A Goat's Echo",
+    type: "MAGIC",
+    stars: 2,
+    description: "Si tienes suerte, la cabra ya estará en un lugar con eco. Si no, bueno... buena suerte.",
+    locales: [
+      { name: "Mountain", value: 3 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["LUNGS"] },
+      { method: "DISTIL", tags: ["MOOD"] }
+    ],
+    notes: ["Requiere Varita"]
+  },
+  {
+    id: 41,
+    name: "An Innocent's Suffering",
+    type: "MAGIC",
+    stars: 2,
+    description: "Este es uno de esos reactivos de la vieja escuela que le dieron mala fama a las brujas. Hoy en día es mucho más eficiente encontrar a un excursionista con los pies doloridos.",
+    locales: [
+      { name: "Mountain", value: 9 },
+      { name: "Bog", value: 9 },
+      { name: "Dungeon", value: 11 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["PAIN", "SLEEP", "NERVES", "WOUND"] }
+    ],
+    notes: ["Requiere Varita"]
+  },
+  {
+    id: 42,
+    name: "Glacier Moss",
+    type: "PLANT",
+    stars: 3,
+    description: "Este musgo de color blanco brillante crece en los lados de los glaciares y parece a primera vista como parches de nieve. Los montañistas experimentados lo mastican, ya que libera lentamente el agua dentro y sabe a menta.",
+    locales: [
+      { name: "Mountain", value: 9 },
+      { name: "Isles", value: 6 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["DEHYDRATION", "LUNGS"] }
+    ],
+    notes: []
+  },
+  {
+    id: 43,
+    name: "Moon Moss",
+    type: "PLANT",
+    stars: 3,
+    description: "Musgo gris-blanco que según los rumores crece en la superficie de la luna y fue raspado por el pico de Moonbreaker hace eones. Lleva un toque de la energía mágica de la luna.",
+    locales: [
+      { name: "Mountain", value: 13 },
+      { name: "Isles", value: 6 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["BLOOD", "CURSE"] }
+    ],
+    notes: []
+  },
+  {
+    id: 44,
+    name: "Nest Scraps",
+    type: "ANIMAL",
+    stars: 1,
+    description: "Las aves que construyen nidos, especialmente las Águilas de Rannoc, tienen gustos bastante particulares para sus nidos. No destruyas los nidos, por favor.",
+    locales: [
+      { name: "Mountain", value: 4 },
+      { name: "Forest", value: 4 }
+    ],
+    seasonMods: "+2 en Invierno | -2 en Primavera",
+    uses: [
+      { method: "CRUSH", tags: ["COLD"] },
+      { method: "BOIL", tags: ["HOT"] }
+    ],
+    notes: []
+  },
+  {
+    id: 45,
+    name: "Hiker's Helper",
+    type: "PLANT",
+    stars: 1,
+    description: "Una mala hierba gruesa y frondosa que crece donde puede echar raíces, que gracias a los senderistas que descartan las hojas usadas donde les plazca, parece estar por todo High Rannoc.",
+    locales: [
+      { name: "Village", value: 3 },
+      { name: "Mountain", value: 4 },
+      { name: "Isles", value: 7 }
+    ],
+    seasonMods: "+4 en Invierno",
+    uses: [
+      { method: "BOIL (hojas)", tags: ["PAIN"] }
+    ],
+    notes: []
+  },
+
+  // ── HERO'S HOLLOW (Dungeon) ──
+  {
+    id: 46,
+    name: "Crow Coal",
+    type: "MAGIC",
+    stars: 2,
+    description: "Un favorito entre los córvidos que han comido algo en mal estado, el Crow Coal es un carbón plateado que neutraliza la mayoría de los venenos ingeridos. Conseguirlo de los cuervos que lo guardan no es fácil.",
+    locales: [
+      { name: "Dungeon", value: 7 },
+      { name: "Bog", value: 4 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["DEHYDRATION", "STOMACH", "POISON"] }
+    ],
+    notes: []
+  },
+  {
+    id: 47,
+    name: "Liquid Fire",
+    type: "MAGIC",
+    stars: 2,
+    description: "No confundir con lava, el fuego líquido se puede aprovechar para usos medicinales si sabes cómo. Se usa principalmente para matar parásitos y limpiar al paciente.",
+    locales: [
+      { name: "Dungeon", value: 6 },
+      { name: "Strange", value: 3 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["PARASITES", "INFECTION"] }
+    ],
+    notes: []
+  },
+  {
+    id: 48,
+    name: "Skeleton Dust",
+    type: "MAGIC",
+    stars: 2,
+    description: "Aunque los esqueletos normales sirven, los reanimados mediante rituales de nigromancia son mejores ya que la magia residual mantiene sus huesos más fuertes.",
+    locales: [
+      { name: "Dungeon", value: 5 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["TEETH", "BONES", "HAIR"] }
+    ],
+    notes: []
+  },
+  {
+    id: 49,
+    name: "Old Blood",
+    type: "MAGIC",
+    stars: 2,
+    description: "Murciélagos vampiro, garrapatas, puntas de lanza, no importa mucho de dónde venga; lo que importa es que la sangre no puede ser fresca.",
+    locales: [
+      { name: "Dungeon", value: 5 },
+      { name: "Strange", value: 2 },
+      { name: "Mountain", value: 9 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL", tags: ["CURSE", "RASH"] }
+    ],
+    notes: ["Añade 1 punto de VENENO"]
+  },
+  {
+    id: 50,
+    name: "Salamander Urine",
+    type: "ANIMAL",
+    stars: 3,
+    description: "Estas lagartijas amantes de la lava viven cerca de ríos y lagos del mismo. Sé sigiloso; si haces demasiado ruido saltarán dentro y nunca las atraparás.",
+    locales: [
+      { name: "Dungeon", value: 8 },
+      { name: "Strange", value: 5 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (orina)", tags: ["HOT"] },
+      { method: "RAW (orina)", tags: ["COLD"] }
+    ],
+    notes: ["Añade 1 punto de DULCE"]
+  },
+  {
+    id: 51,
+    name: "Basilisk's Gaze",
+    type: "MAGIC",
+    stars: 3,
+    description: "Por suerte solo los basíliscos exóticos pueden petrificar con una sola mirada, la variante de Rannoc es mucho más débil. Pero no seas imprudente; las gafas de sol o un espejo siguen siendo importantes.",
+    locales: [
+      { name: "Dungeon", value: 9 },
+      { name: "Strange", value: 5 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["WARTS", "BOILS"] },
+      { method: "DISTIL", tags: ["TIME"] }
+    ],
+    notes: ["Requiere Varita", "Añade 1 punto de VENENO"]
+  },
+  {
+    id: 52,
+    name: "Skullcap",
+    type: "PLANT",
+    stars: 1,
+    description: "Estos lúgubres hongoncitos parecen casi exactamente como cráneos humanos encogidos. Cuando esporulan, la mandíbula se abre y libera la nube como una tos.",
+    locales: [
+      { name: "Dungeon", value: 2 },
+      { name: "Bog", value: 4 }
+    ],
+    seasonMods: "+3 en Invierno",
+    uses: [
+      { method: "CRUSH (sombrero)", tags: ["POISON"] },
+      { method: "BOIL (esporas)", tags: ["PAIN"] }
+    ],
+    notes: []
+  },
+  {
+    id: 53,
+    name: "Darkwater",
+    type: "MAGIC",
+    stars: 2,
+    description: "Un favorito de los demonios encontrados en Lo Extraño, el agua oscura es un refresco agridulce que tiene algunas propiedades medicinales útiles.",
+    locales: [
+      { name: "Dungeon", value: 7 },
+      { name: "Strange", value: 1 },
+      { name: "Village", value: 13 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["COUGH", "HOT", "MAGIC"] }
+    ],
+    notes: ["Añade 3 puntos de DULCE", "⚠ CAUSA [SLEEP]"]
+  },
+  {
+    id: 54,
+    name: "Silverleaf",
+    type: "PLANT",
+    stars: 1,
+    description: "Hojas afiladas como navajas con cualidades similares a la plata real, esta planta está en la línea entre planta y mineral. Crece en la oscuridad.",
+    locales: [
+      { name: "Dungeon", value: 4 },
+      { name: "Bog", value: 4 }
+    ],
+    seasonMods: "+5 en Verano",
+    uses: [
+      { method: "CRUSH (hojas)", tags: ["INFECTION", "RASH"] }
+    ],
+    notes: []
+  },
+  {
+    id: 55,
+    name: "Hermit Snail",
+    type: "ANIMAL",
+    stars: 1,
+    description: "Las conchas vacías de estos caracoles en constante crecimiento se pueden encontrar donde quiera que los caracoles hayan estado. La baba seca dentro y las propias conchas tienen propiedades curativas.",
+    locales: [
+      { name: "Dungeon", value: 2 },
+      { name: "Loch", value: 7 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "BOIL (baba)", tags: ["WOUND"] },
+      { method: "CRUSH (concha)", tags: ["BONES"] }
+    ],
+    notes: []
+  },
+  {
+    id: 56,
+    name: "Flood Bulb",
+    type: "PLANT",
+    stars: 2,
+    description: "Un componente básico de trampas, los bulbos de inundación son vegetales azules y bulbosos que, cuando se revientan, crean un volumen desproporcionado de agua.",
+    locales: [
+      { name: "Dungeon", value: 6 },
+      { name: "Loch", value: 10 },
+      { name: "Isles", value: 4 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH (semillas)", tags: ["DEHYDRATION", "POISON"] }
+    ],
+    notes: []
+  },
+  {
+    id: 57,
+    name: "Giant Spider Venom",
+    type: "ANIMAL",
+    stars: 3,
+    description: "Una pesadilla de recolectar. El mejor método que he encontrado es hacer un ciervo falso, tirarlo a su guarida y dejar que lo muerdan, luego ir a robarlo cuando duermen.",
+    locales: [
+      { name: "Dungeon", value: 7 },
+      { name: "Forest", value: 9 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "DISTIL (veneno)", tags: ["PAIN", "NERVES"] }
+    ],
+    notes: ["Añade 1 punto de VENENO"]
+  },
+  {
+    id: 58,
+    name: "Ghost Goo",
+    type: "MAGIC",
+    stars: 3,
+    description: "Criaturas desordenadas por naturaleza, los fantasmas dejan un espeso baba brillante cuando tocan ciertos objetos que de alguna forma resuenan con quienes fueron en vida.",
+    locales: [
+      { name: "Dungeon", value: 6 },
+      { name: "Strange", value: 6 }
+    ],
+    seasonMods: "-2 en Invierno",
+    uses: [
+      { method: "BOIL", tags: ["SPIRIT", "CURSE"] }
+    ],
+    notes: []
+  },
+  {
+    id: 59,
+    name: "Coldrust",
+    type: "MAGIC",
+    stars: 1,
+    description: "Óxido azul que se come a través de artefactos mágicos antiguos, recogiendo el poder del objeto mientras crece.",
+    locales: [
+      { name: "Dungeon", value: 2 },
+      { name: "Mountain", value: 7 },
+      { name: "Strange", value: 3 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "CRUSH", tags: ["HOT", "MAGIC"] }
+    ],
+    notes: []
+  },
+  {
+    id: 60,
+    name: "Vampire Venom",
+    type: "ANIMAL",
+    stars: 3,
+    description: "Antes se obtenía con piel de cerdo con un forro debajo para capturar el veneno, pero se las ingeniaron. Ahora hay que extraerlo mientras duermen.",
+    locales: [
+      { name: "Dungeon", value: 10 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "DISTIL", tags: ["CURSE"] },
+      { method: "RAW", tags: ["PAIN", "MOOD"] }
+    ],
+    notes: []
+  },
+  {
+    id: 61,
+    name: "Wyrd Water",
+    type: "MAGIC",
+    stars: 3,
+    description: "Agua mágica brillante nativa de Lo Extraño que, si se prepara correctamente, puede cumplir cualquier requisito.",
+    locales: [
+      { name: "Strange", value: 10 }
+    ],
+    seasonMods: "",
+    uses: [
+      { method: "RAW", tags: ["(cualquier etiqueta de tu elección)"] }
+    ],
+    notes: []
+  }
+];
+
+// ══════════════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════════════
+// FIREBASE STATE SYNC
+const firebaseConfig = {
+  apiKey: "AIzaSyA1oY1ST7vRnKq_uSKwTkw71mo3hGR9FRE",
+  authDomain: "apothecaria-reagents.firebaseapp.com",
+  projectId: "apothecaria-reagents",
+  storageBucket: "apothecaria-reagents.firebasestorage.app",
+  messagingSenderId: "472429101242",
+  appId: "1:472429101242:web:c672834a6b6f8b529cc283"
+};
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, setDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const STATE_DOC = doc(db, "apothecaria", "state");
+
+let state = {};
+let syncReady = false;
+
+function getState(id) {
+  if (!state[id]) state[id] = { owned: false, count: 0 };
+  return state[id];
+}
+
+let saveTimer = null;
+function saveState() {
+  localStorage.setItem('apothecaria_state', JSON.stringify(state));
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try {
+      await setDoc(STATE_DOC, { data: JSON.stringify(state) });
+      setSyncStatus('ok');
+    } catch(e) {
+      setSyncStatus('offline');
+    }
+  }, 600);
+}
+
+function setSyncStatus(status) {
+  const el = document.getElementById('syncStatus');
+  if (!el) return;
+  const msgs = { loading: '⟳ Cargando...', ok: '☁ Sincronizado', offline: '⚠ Sin conexion' };
+  el.textContent = msgs[status] || '';
+  el.style.color = status === 'ok' ? '#5a8b1a' : status === 'offline' ? '#8b1a1a' : '#b8860b';
+}
+
+async function initFirebase() {
+  setSyncStatus('loading');
+  const local = localStorage.getItem('apothecaria_state');
+  if (local) { try { state = JSON.parse(local); } catch(e) {} }
+  try {
+    onSnapshot(STATE_DOC, (snap) => {
+      if (snap.exists()) {
+        try { state = JSON.parse(snap.data().data || '{}'); } catch(e) {}
+        localStorage.setItem('apothecaria_state', JSON.stringify(state));
+      }
+      setSyncStatus('ok');
+      if (!syncReady) { syncReady = true; }
+      renderGrid();
+    }, (err) => {
+      setSyncStatus('offline');
+      if (!syncReady) { syncReady = true; renderGrid(); }
+    });
+  } catch(e) {
+    setSyncStatus('offline');
+    syncReady = true;
+    renderGrid();
+  }
+}
+
+// RENDER
+function renderStars(n) {
+  if (n === 0) return '<span style="color:var(--ink-light);font-size:0.7rem">Sin nivel</span>';
+  return '\u2605'.repeat(n) + '<span style="color:rgba(0,0,0,0.15)">\u2605</span>'.repeat(3 - n);
+}
+
+function renderDiffPips(value) {
+  const max = 13;
+  const filled = Math.min(value, max);
+  let html = '<div class="diff-pips">';
+  for (let i = 0; i < max; i++) {
+    html += `<div class="pip${i < filled ? ' filled' : ''}"></div>`;
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderCard(r) {
+  const s = getState(r.id);
+  const owned = s.owned;
+  const count = s.count || 0;
+
+  const localeRows = r.locales.map(l =>
+    `<tr>
+      <td><span class="locale-badge loc-${l.name}">${l.name}</span></td>
+      <td>
+        <div class="difficulty-bar">
+          ${renderDiffPips(l.value)}
+          <span class="diff-num">${l.value}</span>
+        </div>
+      </td>
+    </tr>`
+  ).join('');
+
+  const usesHtml = r.uses.filter(u => u.tags.length > 0).map(u =>
+    `<div class="use-item">
+      <em>${u.method}</em>
+      ${u.tags.map(t => `<span class="tag-pill">${t}</span>`).join('')}
+    </div>`
+  ).join('');
+
+  const notesHtml = r.notes.map(n => {
+    if (n.includes('VENENO')) return `<div class="special-note">\u26a0 ${n}</div>`;
+    if (n.includes('DULCE')) return `<div class="sweet-note">\u2756 ${n}</div>`;
+    if (n.includes('Requiere Varita')) return `<div class="wand-note">\u2756 ${n}</div>`;
+    return `<div class="special-note">${n}</div>`;
+  }).join('');
+
+  return `
+  <div class="reagent-card${owned ? ' owned' : ''}" data-id="${r.id}" data-name="${r.name.toLowerCase()}" data-type="${r.type}" data-locales="${r.locales.map(l=>l.name).join(',')}" data-tags="${r.uses.flatMap(u=>u.tags).join(',')}">
+    <div class="card-header" onclick="toggleCard(${r.id})">
+      <div class="owned-checkbox" onclick="toggleOwned(event, ${r.id})" title="Marcar como obtenido">
+        ${owned ? '\u2713' : ''}
+      </div>
+      <div class="card-main">
+        <div class="reagent-name">${r.name}</div>
+        <div class="card-meta">
+          <span class="type-badge type-${r.type}">${r.type}</span>
+          <span class="stars">${renderStars(r.stars)}</span>
+        </div>
+      </div>
+      <span class="expand-icon">\u25b6</span>
+    </div>
+    <div class="card-body">
+      <p class="card-description">${r.description}</p>
+      <table class="locale-table">
+        <thead><tr><th>Locale</th><th>Dificultad</th></tr></thead>
+        <tbody>${localeRows}</tbody>
+      </table>
+      ${r.seasonMods ? `<div class="season-mod">\ud83d\udcc5 <span>Temporada:</span> ${r.seasonMods}</div>` : ''}
+      ${usesHtml ? `<div class="uses-section"><div class="uses-title">Usos medicinales</div>${usesHtml}</div>` : ''}
+      ${notesHtml}
+      <div class="count-control">
+        <span class="count-label">Cantidad:</span>
+        <button class="count-btn" onclick="changeCount(event, ${r.id}, -1)">\u2212</button>
+        <span class="count-display" id="count-${r.id}">${count}</span>
+        <button class="count-btn" onclick="changeCount(event, ${r.id}, 1)">+</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function toggleCard(id) {
+  const card = document.querySelector(`[data-id="${id}"]`);
+  card.classList.toggle('expanded');
+}
+
+function toggleOwned(event, id) {
+  event.stopPropagation();
+  const s = getState(id);
+  s.owned = !s.owned;
+  saveState();
+  renderGrid();
+}
+
+function changeCount(event, id, delta) {
+  event.stopPropagation();
+  const s = getState(id);
+  s.count = Math.max(0, (s.count || 0) + delta);
+  saveState();
+  document.getElementById(`count-${id}`).textContent = s.count;
+}
+
+function renderGrid() {
+  const search = document.getElementById('searchInput').value.toLowerCase();
+  const typeF = document.getElementById('typeFilter').value;
+  const localeF = document.getElementById('localeFilter').value;
+  const useF = document.getElementById('useFilter').value.toUpperCase();
+  const ownedF = document.getElementById('ownedFilter').value;
+
+  const filtered = reagents.filter(r => {
+    const s = getState(r.id);
+    if (search && !r.name.toLowerCase().includes(search) &&
+        !r.uses.flatMap(u=>u.tags).join(' ').toLowerCase().includes(search) &&
+        !r.description.toLowerCase().includes(search)) return false;
+    if (typeF && r.type !== typeF) return false;
+    if (localeF && !r.locales.some(l => l.name === localeF)) return false;
+    if (useF && !r.uses.some(u => u.tags.some(t => t.toUpperCase() === useF))) return false;
+    if (ownedF === 'owned' && !s.owned) return false;
+    if (ownedF === 'missing' && s.owned) return false;
+    return true;
+  });
+
+  const grid = document.getElementById('reagentGrid');
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="no-results">No se encontraron reactivos con esos filtros...</div>';
+  } else {
+    grid.innerHTML = filtered.map(r => renderCard(r)).join('');
+  }
+
+  const ownedCount = reagents.filter(r => getState(r.id).owned).length;
+  document.getElementById('statShown').textContent = filtered.length;
+  document.getElementById('statOwned').textContent = ownedCount;
+  document.getElementById('statMissing').textContent = reagents.length - ownedCount;
+}
+
+document.getElementById('searchInput').addEventListener('input', renderGrid);
+document.getElementById('typeFilter').addEventListener('change', renderGrid);
+document.getElementById('localeFilter').addEventListener('change', renderGrid);
+document.getElementById('useFilter').addEventListener('change', renderGrid);
+document.getElementById('ownedFilter').addEventListener('change', renderGrid);
+
+initFirebase();
+</script>
+</body>
+</html>
