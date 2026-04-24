@@ -1837,6 +1837,11 @@ document.getElementById('localeFilter').addEventListener('change', renderGrid);
 document.getElementById('useFilter').addEventListener('change', renderGrid);
 document.getElementById('ownedFilter').addEventListener('change', renderGrid);
 
+// Exponer funciones al scope global para que funcionen los onclick
+window.toggleCard = toggleCard;
+window.toggleOwned = toggleOwned;
+window.changeCount = changeCount;
+
 initFirebase();
 </script>
 </body>
